@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  spark-master:
+    image: 'apache/spark'
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.master.Master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+
+  spark-worker:
+    image: 'apache/spark'
+    command:
+      - /opt/spark/bin/spark-class
+      - org.apache.spark.deploy.worker.Worker
+      - spark://spark-master:7077
+    depends_on:
+      - spark-master
+
+  spark-history-server:
+    image: 'apache/spark'
+    command:
+      - /opt/spark/bin/spark-class
+      - -Dspark.history.fs.logDirectory=/opt/spark/work
+      - org.apache.spark.deploy.history.HistoryServer
+    ports:
+      - "18080:18080"
+
+  pyspark-job:
+    build: .
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_MASTER_URL=spark://spark-master:7077
